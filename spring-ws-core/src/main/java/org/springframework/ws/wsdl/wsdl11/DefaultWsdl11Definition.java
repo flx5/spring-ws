@@ -16,11 +16,27 @@
 
 package org.springframework.ws.wsdl.wsdl11;
 
+import java.lang.reflect.Constructor;
 import java.util.Properties;
+import java.util.Set;
 
+import javax.wsdl.Definition;
+import javax.wsdl.Types;
+import javax.wsdl.WSDLElement;
+import javax.wsdl.WSDLException;
+import javax.wsdl.extensions.ElementExtensible;
+import javax.wsdl.extensions.ExtensibilityElement;
+import javax.wsdl.extensions.schema.Schema;
+import javax.wsdl.factory.WSDLFactory;
+import javax.xml.namespace.QName;
 import javax.xml.transform.Source;
 
+import org.springframework.aot.hint.*;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.context.annotation.ImportRuntimeHints;
+import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.util.StringUtils;
 import org.springframework.ws.wsdl.wsdl11.provider.DefaultMessagesProvider;
 import org.springframework.ws.wsdl.wsdl11.provider.InliningXsdSchemaTypesProvider;
@@ -53,6 +69,7 @@ import org.springframework.xml.xsd.XsdSchemaCollection;
  * @author Arjen Poutsma
  * @since 1.5.0
  */
+@ImportRuntimeHints(DefaultWsdl11Definition.RuntimeHints.class)
 public class DefaultWsdl11Definition implements Wsdl11Definition, InitializingBean {
 
 	private final InliningXsdSchemaTypesProvider typesProvider = new InliningXsdSchemaTypesProvider();
@@ -188,5 +205,35 @@ public class DefaultWsdl11Definition implements Wsdl11Definition, InitializingBe
 	@Override
 	public Source getSource() {
 		return delegate.getSource();
+	}
+
+	static class RuntimeHints  implements RuntimeHintsRegistrar {
+
+		@Override
+		public void registerHints(org.springframework.aot.hint.RuntimeHints hints, ClassLoader classLoader) {
+			// Register the factory for reflection so that it can be created at runtime.
+			try {
+				WSDLFactory wsdlFactory = WSDLFactory.newInstance();
+				Constructor<? extends WSDLFactory> factoryCtor = wsdlFactory.getClass().getDeclaredConstructor();
+				hints.reflection().registerConstructor(factoryCtor, ExecutableMode.INVOKE);
+
+				// Scan for WSDL Element implementations near the definition type.
+				Definition definition = wsdlFactory.newDefinition();
+				ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
+				scanner.addIncludeFilter(new AssignableTypeFilter(ElementExtensible.class));
+				scanner.addIncludeFilter(new AssignableTypeFilter(ExtensibilityElement.class));
+
+				Set<BeanDefinition> wsdlImpls = scanner.findCandidateComponents(definition.getClass().getPackageName());
+
+				for (BeanDefinition wsdlImpl : wsdlImpls) {
+					String className = wsdlImpl.getBeanClassName();
+					if (className != null)
+						hints.reflection().registerType(TypeReference.of(className), MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS);
+				}
+
+			} catch (WSDLException | NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 }

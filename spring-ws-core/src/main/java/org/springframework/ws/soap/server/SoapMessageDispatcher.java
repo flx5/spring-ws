@@ -39,6 +39,7 @@ import org.springframework.ws.soap.SoapHeaderElement;
 import org.springframework.ws.soap.SoapMessage;
 import org.springframework.ws.soap.soap11.Soap11Header;
 import org.springframework.ws.soap.soap12.Soap12Header;
+import org.springframework.ws.support.DefaultStrategiesHelper;
 
 /**
  * SOAP-specific subclass of the {@link MessageDispatcher}. Adds functionality for adding actor roles to a endpoint
@@ -172,12 +173,9 @@ public class SoapMessageDispatcher extends MessageDispatcher {
 		}
 	}
 
-	static class RuntimeHints implements RuntimeHintsRegistrar {
-
-		@Override
-		public void registerHints(org.springframework.aot.hint.RuntimeHints hints, ClassLoader classLoader) {
-			String name = ClassUtils.getShortName(SoapMessageDispatcher.class) + ".properties";
-			hints.resources().registerResource(new ClassPathResource(name, SoapMessageDispatcher.class));
+	static class RuntimeHints extends DefaultStrategiesHelper.RuntimeHints {
+		protected RuntimeHints() {
+			super(SoapMessageDispatcher.class);
 		}
 	}
 

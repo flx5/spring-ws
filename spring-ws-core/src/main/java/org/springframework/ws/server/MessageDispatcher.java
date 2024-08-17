@@ -22,10 +22,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
+import org.springframework.aot.hint.TypeReference;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.BeanNameAware;
@@ -33,9 +36,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.ws.FaultAwareWebServiceMessage;
 import org.springframework.ws.NoEndpointFoundException;
@@ -462,12 +467,9 @@ public class MessageDispatcher implements WebServiceMessageReceiver, BeanNameAwa
 		}
 	}
 
-	static class RuntimeHints implements RuntimeHintsRegistrar {
-
-		@Override
-		public void registerHints(org.springframework.aot.hint.RuntimeHints hints, ClassLoader classLoader) {
-			String name = ClassUtils.getShortName(MessageDispatcher.class) + ".properties";
-			hints.resources().registerResource(new ClassPathResource(name, MessageDispatcher.class));
+	static class RuntimeHints extends DefaultStrategiesHelper.RuntimeHints {
+		protected RuntimeHints() {
+			super(MessageDispatcher.class);
 		}
 	}
 }

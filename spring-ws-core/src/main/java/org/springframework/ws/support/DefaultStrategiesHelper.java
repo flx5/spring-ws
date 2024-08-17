@@ -24,6 +24,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import org.springframework.aot.hint.MemberCategory;
+import org.springframework.aot.hint.RuntimeHintsRegistrar;
+import org.springframework.aot.hint.TypeReference;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanClassLoaderAware;
@@ -47,6 +50,7 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.ServletContextAware;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.ws.server.MessageDispatcher;
 
 /**
  * Helper class for for loading default implementations of an interface. Encapsulates a properties object, which
@@ -215,6 +219,38 @@ public class DefaultStrategiesHelper {
 					"Could not find exactly 1 strategy for interface [" + strategyInterface.getName() + "]");
 		}
 		return result.get(0);
+	}
+
+	public abstract static class RuntimeHints implements RuntimeHintsRegistrar {
+
+		private final Class<?> clazz;
+
+        protected RuntimeHints(Class<?> clazz) {
+            this.clazz = clazz;
+        }
+
+        @Override
+		public void registerHints(org.springframework.aot.hint.RuntimeHints hints, ClassLoader classLoader) {
+			// Register the properties file
+			String name = ClassUtils.getShortName(this.clazz) + ".properties";
+			ClassPathResource resource = new ClassPathResource(name, this.clazz);
+			hints.resources().registerResource(resource);
+
+			// Register the classes listed in the properties.
+			try {
+				Properties properties = PropertiesLoaderUtils.loadProperties(resource);
+
+				for (Object value : properties.values()) {
+					String[] classNames = StringUtils.commaDelimitedListToStringArray((String) value);
+
+					for (String clazz : classNames) {
+						hints.reflection().registerTypeIfPresent(classLoader, clazz, MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS);
+					}
+				}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 
 }

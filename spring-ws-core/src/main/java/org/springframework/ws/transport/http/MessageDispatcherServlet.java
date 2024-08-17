@@ -21,7 +21,6 @@ import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.BeanInitializationException;
@@ -466,12 +465,9 @@ public class MessageDispatcherServlet extends FrameworkServlet {
 		}
 	}
 
-	static class RuntimeHints implements RuntimeHintsRegistrar {
-
-		@Override
-		public void registerHints(org.springframework.aot.hint.RuntimeHints hints, ClassLoader classLoader) {
-			String name = ClassUtils.getShortName(MessageDispatcherServlet.class) + ".properties";
-			hints.resources().registerResource(new ClassPathResource(name, MessageDispatcherServlet.class));
+	static class RuntimeHints extends DefaultStrategiesHelper.RuntimeHints {
+		protected RuntimeHints() {
+			super(MessageDispatcherServlet.class);
 		}
 	}
 }
