@@ -23,6 +23,9 @@ import java.util.Locale;
 
 import javax.xml.namespace.QName;
 
+import org.springframework.aot.hint.RuntimeHintsRegistrar;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.ws.context.MessageContext;
@@ -166,6 +169,15 @@ public class SoapMessageDispatcher extends MessageDispatcher {
 			for (QName headerName : notUnderstoodHeaderNames) {
 				soap12Header.addNotUnderstoodHeaderElement(headerName);
 			}
+		}
+	}
+
+	static class RuntimeHints implements RuntimeHintsRegistrar {
+
+		@Override
+		public void registerHints(org.springframework.aot.hint.RuntimeHints hints, ClassLoader classLoader) {
+			String name = ClassUtils.getShortName(SoapMessageDispatcher.class) + ".properties";
+			hints.resources().registerResource(new ClassPathResource(name, SoapMessageDispatcher.class));
 		}
 	}
 

@@ -21,11 +21,15 @@ import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.aot.hint.RuntimeHints;
+import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.ClassUtils;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.FrameworkServlet;
@@ -459,6 +463,15 @@ public class MessageDispatcherServlet extends FrameworkServlet {
 				XsdSchema schema = entry.getValue();
 				logger.debug("Published [" + schema + "] as " + beanName + XSD_SUFFIX_NAME);
 			}
+		}
+	}
+
+	static class RuntimeHints implements RuntimeHintsRegistrar {
+
+		@Override
+		public void registerHints(org.springframework.aot.hint.RuntimeHints hints, ClassLoader classLoader) {
+			String name = ClassUtils.getShortName(MessageDispatcherServlet.class) + ".properties";
+			hints.resources().registerResource(new ClassPathResource(name, MessageDispatcherServlet.class));
 		}
 	}
 }

@@ -26,10 +26,13 @@ import javax.xml.transform.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.beans.factory.BeanInitializationException;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.oxm.Marshaller;
 import org.springframework.oxm.Unmarshaller;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.ws.FaultAwareWebServiceMessage;
 import org.springframework.ws.WebServiceMessage;
@@ -823,4 +826,12 @@ public class WebServiceTemplate extends WebServiceAccessor implements WebService
 		}
 	}
 
+	static class RuntimeHints implements RuntimeHintsRegistrar {
+
+		@Override
+		public void registerHints(org.springframework.aot.hint.RuntimeHints hints, ClassLoader classLoader) {
+			String name = ClassUtils.getShortName(WebServiceTemplate.class) + ".properties";
+			hints.resources().registerResource(new ClassPathResource(name, WebServiceTemplate.class));
+		}
+	}
 }
