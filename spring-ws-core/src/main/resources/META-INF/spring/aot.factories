@@ -1,4 +1,5 @@
 org.springframework.aot.hint.RuntimeHintsRegistrar=\
   org.springframework.ws.transport.http.MessageDispatcherServlet.RuntimeHints, \
   org.springframework.ws.soap.server.SoapMessageDispatcher.RuntimeHints, \
-  org.springframework.ws.server.MessageDispatcher.RuntimeHints
+  org.springframework.ws.server.MessageDispatcher.RuntimeHints, \
+  org.springframework.ws.server.endpoint.adapter.method.jaxb.AbstractJaxb2PayloadMethodProcessor.RuntimeHints

@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import org.springframework.aot.hint.ExecutableMode;
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.aot.hint.TypeReference;
@@ -243,8 +244,11 @@ public class DefaultStrategiesHelper {
 				for (Object value : properties.values()) {
 					String[] classNames = StringUtils.commaDelimitedListToStringArray((String) value);
 
-					for (String clazz : classNames) {
-						hints.reflection().registerTypeIfPresent(classLoader, clazz, MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS);
+					for (String className : classNames) {
+						hints.reflection().registerTypeIfPresent(classLoader, className, builder -> {
+							builder.withMembers(MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS)
+								.onReachableType(this.clazz);
+						});
 					}
 				}
 			} catch (IOException e) {

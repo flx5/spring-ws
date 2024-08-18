@@ -45,7 +45,12 @@ import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import org.springframework.aot.hint.MemberCategory;
+import org.springframework.aot.hint.RuntimeHints;
+import org.springframework.aot.hint.RuntimeHintsRegistrar;
+import org.springframework.aot.hint.TypeReference;
 import org.springframework.core.MethodParameter;
+import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 import org.springframework.ws.WebServiceMessage;
 import org.springframework.ws.context.MessageContext;
@@ -420,4 +425,34 @@ public abstract class AbstractJaxb2PayloadMethodProcessor extends AbstractPayloa
 		}
 	}
 
+	static class RuntimeHints implements RuntimeHintsRegistrar {
+
+		@Override
+		public void registerHints(@NonNull org.springframework.aot.hint.RuntimeHints hints, ClassLoader classLoader) {
+			// Required because glassfish does not have hints for these itself yet: https://github.com/eclipse-ee4j/jaxb-ri/pull/1802
+
+			boolean isGlassfish;
+            try {
+				isGlassfish = "org.glassfish.jaxb.runtime.v2.runtime.JAXBContextImpl".equals(JAXBContext.newInstance().getClass().getName());
+            } catch (JAXBException e) {
+                throw new RuntimeException(e);
+            }
+
+			if (isGlassfish) {
+				registerGlassfishHints(hints);
+			}
+		}
+
+		private static void registerGlassfishHints(org.springframework.aot.hint.RuntimeHints hints) {
+			String[] jaxbProperties = new String[] { "SingleElementLeafProperty", "ArrayElementLeafProperty", "SingleElementNodeProperty",
+					"SingleReferenceNodeProperty", "SingleMapNodeProperty", "ArrayElementNodeProperty", "ArrayReferenceNodeProperty"};
+
+			for (String jaxbProperty : jaxbProperties) {
+				TypeReference type = TypeReference.of("org.glassfish.jaxb.runtime.v2.runtime.property." + jaxbProperty);
+				hints.reflection().registerType(type, builder -> builder
+						.withMembers(MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS)
+						.onReachableType(AbstractJaxb2PayloadMethodProcessor.class));
+			}
+		}
+	}
 }
