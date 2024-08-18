@@ -17,6 +17,7 @@
 package org.springframework.xml.xpath;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +27,9 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.springframework.aot.hint.ExecutableMode;
+import org.springframework.aot.hint.RuntimeHintsRegistrar;
+import org.springframework.aot.hint.TypeReference;
 import org.springframework.xml.namespace.SimpleNamespaceContext;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Node;
@@ -177,4 +181,20 @@ abstract class Jaxp13XPathExpressionFactory {
 		}
 	}
 
+	static class RuntimeHints implements RuntimeHintsRegistrar {
+
+		@Override
+		public void registerHints(org.springframework.aot.hint.RuntimeHints hints, ClassLoader classLoader) {
+			/*
+			XPath.compile needs reflection in
+			java.xml@17.0.11/com.sun.org.apache.xpath.internal.compiler.FunctionTable.getFunction(FunctionTable.java:353).
+			https://github.com/openjdk/jdk/blob/master/src/java.xml/share/classes/com/sun/org/apache/xpath/internal/compiler/FunctionTable.java
+			 */
+
+            hints.reflection().registerType(TypeReference.of("com.sun.org.apache.xpath.internal.functions.FuncNormalizeSpace"),
+                    builder -> builder
+							.withConstructor(Collections.emptyList(), ExecutableMode.INVOKE)
+							.onReachableType(Jaxp13XPathExpressionFactory.class));
+        }
+	}
 }

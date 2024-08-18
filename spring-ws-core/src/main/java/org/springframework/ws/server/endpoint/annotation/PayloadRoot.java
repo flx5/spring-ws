@@ -16,6 +16,9 @@
 
 package org.springframework.ws.server.endpoint.annotation;
 
+import org.springframework.aot.hint.annotation.Reflective;
+import org.springframework.ws.server.endpoint.PayloadReflectiveProcessor;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
@@ -34,6 +37,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
+@Reflective(PayloadReflectiveProcessor.class)
 @Repeatable(PayloadRoots.class)
 public @interface PayloadRoot {
 

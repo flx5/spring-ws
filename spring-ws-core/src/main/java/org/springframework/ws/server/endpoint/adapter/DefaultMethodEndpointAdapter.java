@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.aot.hint.ExecutableMode;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanClassLoaderAware;
@@ -350,9 +351,13 @@ public class DefaultMethodEndpointAdapter extends AbstractMethodEndpointAdapter
 		@Override
 		public void registerHints(org.springframework.aot.hint.RuntimeHints hints, ClassLoader classLoader) {
 			for (String type : List.of(DOM4J_CLASS_NAME, JAXB2_CLASS_NAME, JDOM_CLASS_NAME, STAX_CLASS_NAME, XOM_CLASS_NAME)) {
-				hints.reflection().registerTypeIfPresent(classLoader, type);
+				hints.reflection().registerTypeIfPresent(classLoader, type, builder -> builder.onReachableType(DefaultMethodEndpointAdapter.class));
 			}
 
+			for (String type : List.of(SOAP_METHOD_ARGUMENT_RESOLVER_CLASS_NAME, SOAP_HEADER_ELEMENT_ARGUMENT_RESOLVER_CLASS_NAME)) {
+				hints.reflection().registerTypeIfPresent(classLoader, type, builder -> builder
+						.onReachableType(DefaultMethodEndpointAdapter.class).withConstructor(List.of(), ExecutableMode.INVOKE));
+			}
 		}
 	}
 }

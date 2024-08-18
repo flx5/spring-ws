@@ -1,0 +1,2 @@
+org.springframework.aot.hint.RuntimeHintsRegistrar=\
+  org.springframework.xml.xpath.Jaxp13XPathExpressionFactory.RuntimeHints
